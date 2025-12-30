@@ -42,9 +42,25 @@ code {
   display: none;
 }
 
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: inline-flex !important;
+}
+
 @media (min-width: 993px) {
   .mobile-hint {
     display: none !important;
+  }
+  
+  .mobile-only {
+    display: none !important;
+  }
+  
+  .desktop-only {
+    display: inline-flex !important;
   }
 }
 
@@ -60,6 +76,14 @@ code {
   
   .mobile-hint {
     display: block;
+  }
+  
+  .mobile-only {
+    display: inline-flex !important;
+  }
+  
+  .desktop-only {
+    display: none !important;
   }
   
   .ant-layout-header {
