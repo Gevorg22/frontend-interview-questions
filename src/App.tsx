@@ -180,10 +180,6 @@ function App() {
             wrapper: {
               borderRadius: '0 16px 16px 0',
               overflow: 'hidden'
-            },
-            content: {
-              borderRadius: '0 16px 16px 0',
-              overflow: 'hidden'
             }
           }}
         >
@@ -215,10 +211,6 @@ function App() {
               overflow: 'hidden'
             },
             wrapper: {
-              borderRadius: '16px 0 0 16px',
-              overflow: 'hidden'
-            },
-            content: {
               borderRadius: '16px 0 0 16px',
               overflow: 'hidden'
             }
