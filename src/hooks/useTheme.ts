@@ -10,7 +10,7 @@ export const useTheme = () => {
     if (saved === 'dark' || saved === 'light') {
       return saved;
     } else {
-      return 'light';
+      return 'dark';
     }
   });
 
