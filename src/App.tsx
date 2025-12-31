@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented } from 'antd';
+import { useState, useMemo, useEffect } from 'react';
+import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented, Skeleton } from 'antd';
 import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined } from '@ant-design/icons';
 import questionsData from './data/questions.json';
 import type { CategoryData, Topic } from './types';
@@ -21,11 +21,19 @@ function App() {
   const [activeQuestionIndex, setActiveQuestionIndex] = useState<number | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'completed' | 'uncompleted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
   const { toggleQuestion, isCompleted, getStats } = useProgress();
   const { theme: appTheme, toggleTheme } = useTheme();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const createQuestionId = (category: string, topicTitle: string, questionIndex: number): string => {
     return `${category}__${topicTitle}__${questionIndex}`;
@@ -247,7 +255,7 @@ function App() {
           placement="left"
           onClose={() => setCategoryDrawerOpen(false)}
           open={categoryDrawerOpen}
-          width={280}
+          size="default"
           styles={{
             header: {
               borderRadius: '0 16px 0 0'
@@ -258,7 +266,8 @@ function App() {
             },
             wrapper: {
               borderRadius: '0 16px 16px 0',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              width: 280
             }
           }}
         >
@@ -280,7 +289,7 @@ function App() {
           placement="right"
           onClose={() => setTopicDrawerOpen(false)}
           open={topicDrawerOpen}
-          width={280}
+          size="default"
           styles={{
             header: {
               borderRadius: '16px 0 0 0'
@@ -291,7 +300,8 @@ function App() {
             },
             wrapper: {
               borderRadius: '16px 0 0 16px',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              width: 280
             }
           }}
         >
@@ -315,7 +325,19 @@ function App() {
               borderRadius: borderRadiusLG,
             }}
           >
-            {selectedTopic ? (
+            {loading ? (
+              <div>
+                <Skeleton active paragraph={{ rows: 1 }} style={{ marginBottom: 24 }} />
+                <Card style={{ marginBottom: 24 }}>
+                  <Skeleton active paragraph={{ rows: 3 }} />
+                </Card>
+                <Card style={{ marginBottom: 24 }}>
+                  <Skeleton active paragraph={{ rows: 2 }} />
+                </Card>
+                <Skeleton.Button active size="large" block style={{ marginBottom: 16 }} />
+                <Skeleton active paragraph={{ rows: 8 }} />
+              </div>
+            ) : selectedTopic ? (
               <>
                 <Breadcrumb
                   style={{ marginBottom: 16 }}
@@ -358,7 +380,7 @@ function App() {
                         value={topicStats.completed}
                         suffix={`/ ${selectedTopic.totalQuestions}`}
                         prefix={<CheckCircleOutlined />}
-                        valueStyle={{ color: '#52c41a' }}
+                        styles={{ content: { color: '#52c41a' } }}
                       />
                     </Col>
                     <Col xs={24} sm={8}>
@@ -366,11 +388,11 @@ function App() {
                         title="Осталось"
                         value={topicStats.remaining}
                         prefix={<ClockCircleOutlined />}
-                        valueStyle={{ color: '#1890ff' }}
+                        styles={{ content: { color: '#1890ff' } }}
                       />
                     </Col>
                     <Col xs={24} sm={8}>
-                      <Space direction="vertical" style={{ width: '100%' }}>
+                      <Space orientation="vertical" style={{ width: '100%' }}>
                         <Text strong>Прогресс</Text>
                         <Progress percent={topicStats.percentage} status="active" />
                       </Space>
@@ -379,7 +401,7 @@ function App() {
                 </Card>
 
                 <Card style={{ marginBottom: 16 }}>
-                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  <Space orientation="vertical" style={{ width: '100%' }} size="middle">
                     <Input
                       placeholder="Поиск по вопросам..."
                       prefix={<SearchOutlined />}
@@ -480,7 +502,7 @@ function App() {
                         title="Изучено вопросов"
                         value={totalStats.completed}
                         prefix={<CheckCircleOutlined />}
-                        valueStyle={{ color: '#52c41a' }}
+                        styles={{ content: { color: '#52c41a' } }}
                       />
                     </Col>
                     <Col xs={24} sm={12}>
@@ -488,11 +510,11 @@ function App() {
                         title="Осталось изучить"
                         value={totalStats.remaining}
                         prefix={<ClockCircleOutlined />}
-                        valueStyle={{ color: '#1890ff' }}
+                        styles={{ content: { color: '#1890ff' } }}
                       />
                     </Col>
                     <Col xs={24}>
-                      <Space direction="vertical" style={{ width: '100%' }}>
+                      <Space orientation="vertical" style={{ width: '100%' }}>
                         <Text strong>Общий прогресс</Text>
                         <Progress percent={totalStats.percentage} status="active" strokeColor="#52c41a" />
                       </Space>
