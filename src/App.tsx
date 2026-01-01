@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented, Skeleton } from 'antd';
 import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined, SoundOutlined, PauseCircleOutlined, ExperimentOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
@@ -18,6 +19,8 @@ const { Panel } = Collapse;
 const data: CategoryData = questionsData as CategoryData;
 
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>('JavaScript');
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
@@ -26,13 +29,14 @@ function App() {
   const [filterMode, setFilterMode] = useState<'all' | 'completed' | 'uncompleted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [showPlayground, setShowPlayground] = useState(false);
   const { toggleQuestion, isCompleted, getStats } = useProgress();
   const { theme: appTheme, toggleTheme } = useTheme();
   const { isSpeaking, toggle: toggleSpeech } = useSpeech();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  const isPlaygroundRoute = location.pathname === '/playground';
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -205,8 +209,10 @@ function App() {
               type="text"
               icon={<ExperimentOutlined />}
               onClick={() => {
-                setShowPlayground(!showPlayground);
-                if (!showPlayground) {
+                if (isPlaygroundRoute) {
+                  navigate('/');
+                } else {
+                  navigate('/playground');
                   setSelectedTopic(null);
                 }
               }}
@@ -235,8 +241,10 @@ function App() {
                 type="text"
                 icon={<ExperimentOutlined />}
                 onClick={() => {
-                  setShowPlayground(!showPlayground);
-                  if (!showPlayground) {
+                  if (isPlaygroundRoute) {
+                    navigate('/');
+                  } else {
+                    navigate('/playground');
                     setSelectedTopic(null);
                   }
                 }}
@@ -373,7 +381,7 @@ function App() {
                 <Skeleton.Button active size="large" block style={{ marginBottom: 16 }} />
                 <Skeleton active paragraph={{ rows: 8 }} />
               </div>
-            ) : showPlayground ? (
+            ) : isPlaygroundRoute ? (
               <CodePlayground theme={appTheme} />
             ) : selectedTopic ? (
               <>
