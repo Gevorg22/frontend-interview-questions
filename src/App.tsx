@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented, Skeleton } from 'antd';
 import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined } from '@ant-design/icons';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import questionsData from './data/questions.json';
 import type { CategoryData, Topic } from './types';
 import { useProgress } from './hooks/useProgress';
@@ -34,6 +36,10 @@ function App() {
     }, 800);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', appTheme);
+  }, [appTheme]);
 
   const createQuestionId = (category: string, topicTitle: string, questionIndex: number): string => {
     return `${category}__${topicTitle}__${questionIndex}`;
@@ -479,7 +485,32 @@ function App() {
                         }
                         key={id}
                       >
-                        <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            code({ inline, className, children, ...props }: any) {
+                              return inline ? (
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              ) : (
+                                <pre style={{ 
+                                  background: appTheme === 'dark' ? '#1e1e1e' : '#f5f5f5', 
+                                  padding: '12px', 
+                                  borderRadius: '6px', 
+                                  overflow: 'auto',
+                                  border: appTheme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e8e8e8'
+                                }}>
+                                  <code className={className} {...props}>
+                                    {children}
+                                  </code>
+                                </pre>
+                              );
+                            }
+                          }}
+                        >
+                          {content}
+                        </ReactMarkdown>
                       </Panel>
                     );
                   })}

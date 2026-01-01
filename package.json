@@ -17,7 +17,9 @@
     "antd": "^6.1.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^6.30.2",
+    "remark-gfm": "^4.0.1",
     "vite": "^7.3.0"
   },
   "devDependencies": {
