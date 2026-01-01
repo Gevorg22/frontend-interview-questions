@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented, Skeleton } from 'antd';
-import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined, SoundOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined, SoundOutlined, PauseCircleOutlined, ExperimentOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import questionsData from './data/questions.json';
@@ -8,6 +8,7 @@ import type { CategoryData, Topic } from './types';
 import { useProgress } from './hooks/useProgress';
 import { useTheme } from './hooks/useTheme';
 import { useSpeech } from './hooks/useSpeech';
+import { CodePlayground } from './components/CodePlayground';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -25,6 +26,7 @@ function App() {
   const [filterMode, setFilterMode] = useState<'all' | 'completed' | 'uncompleted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showPlayground, setShowPlayground] = useState(false);
   const { toggleQuestion, isCompleted, getStats } = useProgress();
   const { theme: appTheme, toggleTheme } = useTheme();
   const { isSpeaking, toggle: toggleSpeech } = useSpeech();
@@ -199,6 +201,20 @@ function App() {
             >
               Случайный
             </Button>
+            <Button
+              type="text"
+              icon={<ExperimentOutlined />}
+              onClick={() => {
+                setShowPlayground(!showPlayground);
+                if (!showPlayground) {
+                  setSelectedTopic(null);
+                }
+              }}
+              style={{ color: 'white' }}
+              className="desktop-only"
+            >
+              Песочница
+            </Button>
             <div className="theme-switch">
               <Switch
                 checked={appTheme === 'dark'}
@@ -212,6 +228,18 @@ function App() {
                 type="text"
                 icon={<ThunderboltOutlined />}
                 onClick={selectRandomQuestion}
+                style={{ color: 'white' }}
+                className="mobile-only"
+              />
+              <Button
+                type="text"
+                icon={<ExperimentOutlined />}
+                onClick={() => {
+                  setShowPlayground(!showPlayground);
+                  if (!showPlayground) {
+                    setSelectedTopic(null);
+                  }
+                }}
                 style={{ color: 'white' }}
                 className="mobile-only"
               />
@@ -345,6 +373,8 @@ function App() {
                 <Skeleton.Button active size="large" block style={{ marginBottom: 16 }} />
                 <Skeleton active paragraph={{ rows: 8 }} />
               </div>
+            ) : showPlayground ? (
+              <CodePlayground theme={appTheme} />
             ) : selectedTopic ? (
               <>
                 <Breadcrumb
