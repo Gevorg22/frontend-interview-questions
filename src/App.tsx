@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented, Skeleton } from 'antd';
-import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined } from '@ant-design/icons';
+import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined, SoundOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import questionsData from './data/questions.json';
 import type { CategoryData, Topic } from './types';
 import { useProgress } from './hooks/useProgress';
 import { useTheme } from './hooks/useTheme';
+import { useSpeech } from './hooks/useSpeech';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -26,6 +27,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const { toggleQuestion, isCompleted, getStats } = useProgress();
   const { theme: appTheme, toggleTheme } = useTheme();
+  const { isSpeaking, toggle: toggleSpeech } = useSpeech();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -482,6 +484,17 @@ function App() {
                               {index + 1}. {title}
                             </span>
                           </Space>
+                        }
+                        extra={
+                          <Button
+                            type="text"
+                            icon={isSpeaking ? <PauseCircleOutlined /> : <SoundOutlined />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSpeech(question);
+                            }}
+                            title={isSpeaking ? 'Остановить озвучку' : 'Озвучить вопрос'}
+                          />
                         }
                         key={id}
                       >
