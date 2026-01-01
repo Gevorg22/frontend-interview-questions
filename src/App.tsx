@@ -142,6 +142,8 @@ function App() {
     : [];
 
   const selectRandomQuestion = () => {
+    navigate('/');
+    
     const allTopics: Array<{ category: string; topic: Topic }> = [];
     Object.entries(data).forEach(([category, topics]) => {
       topics.forEach(topic => {
@@ -189,6 +191,7 @@ function App() {
             level={3} 
             style={{ color: 'white', margin: 0, fontSize: 'clamp(16px, 4vw, 20px)', cursor: 'pointer' }}
             onClick={() => {
+              navigate('/');
               setSelectedCategory('JavaScript');
               setSelectedTopic(null);
             }}
@@ -274,6 +277,7 @@ function App() {
             style={{ height: '100%', borderRight: 0 }}
             items={categoryMenuItems}
             onClick={({ key }) => {
+              navigate('/');
               setSelectedCategory(key);
               setSelectedTopic(null);
             }}
@@ -321,6 +325,7 @@ function App() {
             style={{ borderRight: 0, borderRadius: '0 0 16px 0' }}
             items={categoryMenuItems}
             onClick={({ key }) => {
+              navigate('/');
               setSelectedCategory(key);
               setSelectedTopic(null);
               setCategoryDrawerOpen(false);
