@@ -286,7 +286,7 @@ function App() {
         <Sider width={300} className="desktop-sider" style={{ background: appTheme === 'dark' ? 'rgb(30, 30, 30)' : colorBgContainer, borderLeft: appTheme === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #f0f0f0', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: appTheme === 'dark' ? 'inset 0 0 10px rgba(0, 0, 0, 0.3)' : undefined }}>
           <div style={{ padding: '16px', flexShrink: 0, borderBottom: appTheme === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : undefined }}>
             <Title level={5}>{selectedCategory}</Title>
-            <Text type="secondary">Выберите тему:</Text>
+            {!selectedTopic && !isPlaygroundRoute && <Text type="secondary">Выберите тему:</Text>}
           </div>
           <div style={{ flex: 1, overflow: 'auto' }}>
             <Menu
