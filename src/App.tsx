@@ -719,66 +719,88 @@ function App() {
                   </Row>
                 </Card>
 
-                {expiringQuestions.length > 0 && (
-                  <Card 
-                    style={{ 
-                      marginTop: 24, 
-                      maxWidth: 600, 
-                      margin: '24px auto',
-                      background: appTheme === 'dark' ? 'rgba(255, 77, 79, 0.08)' : '#fff2f0',
-                      border: appTheme === 'dark' ? '1px solid rgba(255, 77, 79, 0.2)' : '1px solid #ffccc7'
-                    }}
-                    title={
-                      <Space>
-                        <span style={{ fontSize: 18 }}>🔴</span>
-                        <span>Вопросы на повторение</span>
-                        <Text type="secondary" style={{ fontSize: 12 }}>{expiringQuestions.length}</Text>
-                      </Space>
-                    }
-                  >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {expiringQuestions.map((q: ExpiringQuestion) => (
-                        <Button
-                          key={q.id}
-                          onClick={() => {
-                            setSelectedCategory(q.category);
-                            setSelectedTopic(data[q.category].find(t => t.title === q.topic) || null);
-                            setFilterMode('all');
-                            setSearchQuery('');
-                            setQuestionToOpen(q.id);
-                          }}
-                          style={{
-                            padding: '12px 16px',
-                            background: getUrgencyColor(q.isDue, q.urgency),
-                            borderRadius: '6px',
-                            color: 'white',
-                            border: 'none',
-                            textAlign: 'left',
-                            height: 'auto',
-                            width: '100%',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            gap: 12,
-                          }}
-                          type="text"
-                        >
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
-                              {q.question.substring(0, 60)}{q.question.length > 60 ? '...' : ''}
+                {(expiringQuestions.length > 0 || totalStats.completed > 0) && (() => {
+                  const hasExpiring = expiringQuestions.length > 0;
+                  const cardBg = hasExpiring 
+                    ? (appTheme === 'dark' ? 'rgba(255, 77, 79, 0.08)' : '#fff2f0')
+                    : (appTheme === 'dark' ? 'rgba(76, 175, 80, 0.08)' : '#f1f8e9');
+                  const cardBorder = hasExpiring
+                    ? (appTheme === 'dark' ? '1px solid rgba(255, 77, 79, 0.2)' : '1px solid #ffccc7')
+                    : (appTheme === 'dark' ? '1px solid rgba(76, 175, 80, 0.2)' : '1px solid #c6e1a0');
+                  const icon = hasExpiring ? '🔴' : '✅';
+                  const title = hasExpiring ? 'Вопросы на повторение' : 'Все в порядке!';
+
+                  return (
+                    <Card 
+                      style={{ 
+                        marginTop: 24, 
+                        maxWidth: 600, 
+                        margin: '24px auto',
+                        background: cardBg,
+                        border: cardBorder
+                      }}
+                      title={
+                        <Space>
+                          <span style={{ fontSize: 18 }}>{icon}</span>
+                          <span>{title}</span>
+                          {hasExpiring && <Text type="secondary" style={{ fontSize: 12 }}>{expiringQuestions.length}</Text>}
+                        </Space>
+                      }
+                    >
+                      {hasExpiring ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {expiringQuestions.map((q: ExpiringQuestion) => (
+                            <Button
+                              key={q.id}
+                              onClick={() => {
+                                setSelectedCategory(q.category);
+                                setSelectedTopic(data[q.category].find(t => t.title === q.topic) || null);
+                                setFilterMode('all');
+                                setSearchQuery('');
+                                setQuestionToOpen(q.id);
+                              }}
+                              style={{
+                              padding: '12px 16px',
+                              background: getUrgencyColor(q.isDue, q.urgency),
+                              borderRadius: '6px',
+                              color: 'white',
+                              border: 'none',
+                              textAlign: 'left',
+                              height: 'auto',
+                              width: '100%',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              gap: 12,
+                            }}
+                            type="text"
+                          >
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
+                                {q.question.substring(0, 60)}{q.question.length > 60 ? '...' : ''}
+                              </div>
+                              <div style={{ fontSize: 12, opacity: 0.9 }}>
+                                {q.category} • {q.topic}
+                              </div>
                             </div>
-                            <div style={{ fontSize: 12, opacity: 0.9 }}>
-                              {q.category} • {q.topic}
+                            <div style={{ fontSize: 12, whiteSpace: 'nowrap', fontWeight: 'bold' }}>
+                              🔴 Повторить
                             </div>
-                          </div>
-                          <div style={{ fontSize: 12, whiteSpace: 'nowrap', fontWeight: 'bold' }}>
-                            🔴 Повторить
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </Card>
-                )}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '24px 16px', color: appTheme === 'dark' ? 'rgba(255, 255, 255, 0.65)' : '#666' }}>
+                        <div style={{ fontSize: 18, marginBottom: 8 }}>🌟</div>
+                        <div style={{ marginBottom: 8 }}>Нет срочных вопросов!</div>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Вы повторили все виду очереди. Продолжайте учить новые вопросы.
+                        </Text>
+                      </div>
+                    )}
+                    </Card>
+                  );
+                })()}
 
                 <div className="mobile-hint" style={{ marginTop: 24 }}>
                   <Button 
