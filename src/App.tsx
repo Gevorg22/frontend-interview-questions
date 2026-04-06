@@ -69,6 +69,7 @@ function App() {
   const [filterMode, setFilterMode] = useState<'all' | 'completed' | 'uncompleted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [questionToOpen, setQuestionToOpen] = useState<string | null>(null);
   const { toggleQuestion, isCompleted, getStats } = useProgress();
   const { theme: appTheme, toggleTheme } = useTheme();
   const { isSpeaking, toggle: toggleSpeech } = useSpeech();
@@ -148,6 +149,18 @@ function App() {
       }
     });
   }, [selectedTopic, selectedCategory, isCompleted, filterMode, searchQuery, createQuestionId]);
+
+  useEffect(() => {
+    if (questionToOpen && selectedTopic && sortedQuestions.length > 0) {
+      const index = sortedQuestions.findIndex(q => q.id === questionToOpen);
+      if (index >= 0) {
+        requestAnimationFrame(() => {
+          setActiveQuestionIndex(index);
+          setQuestionToOpen(null);
+        });
+      }
+    }
+  }, [questionToOpen, selectedTopic, sortedQuestions]);
 
   const topicStats = useMemo(() => {
     if (!selectedTopic) {
@@ -730,6 +743,9 @@ function App() {
                           onClick={() => {
                             setSelectedCategory(q.category);
                             setSelectedTopic(data[q.category].find(t => t.title === q.topic) || null);
+                            setFilterMode('all');
+                            setSearchQuery('');
+                            setQuestionToOpen(q.id);
                           }}
                           style={{
                             padding: '12px 16px',
