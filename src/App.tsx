@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented, Skeleton } from 'antd';
 import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined, SoundOutlined, PauseCircleOutlined, ExperimentOutlined } from '@ant-design/icons';
+import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import questionsData from './data/questions.json';
@@ -9,6 +10,7 @@ import type { CategoryData, Topic } from './types';
 import { useProgress } from './hooks/useProgress';
 import { useTheme } from './hooks/useTheme';
 import { useSpeech } from './hooks/useSpeech';
+import { useSpacedRepetition } from './hooks/useSpacedRepetition';
 import { CodePlayground } from './components/CodePlayground';
 import './App.css';
 
@@ -17,6 +19,36 @@ const { Title, Paragraph, Text } = Typography;
 const { Panel } = Collapse;
 
 const data: CategoryData = questionsData as CategoryData;
+
+// Code component extracted to avoid nesting and enable reusability
+interface CodeBlockProps {
+  inline?: boolean;
+  className?: string;
+  children?: ReactNode;
+  appTheme: string;
+}
+
+const CodeBlock = ({ 
+  inline, 
+  className, 
+  children, 
+  appTheme
+}: CodeBlockProps) => {
+  if (inline) {
+    return <code className={className}>{children}</code>;
+  }
+  return (
+    <pre style={{ 
+      background: appTheme === 'dark' ? '#1e1e1e' : '#f5f5f5', 
+      padding: '12px', 
+      borderRadius: '6px', 
+      overflow: 'auto',
+      border: appTheme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e8e8e8'
+    }}>
+      <code className={className}>{children}</code>
+    </pre>
+  );
+};
 
 function App() {
   const navigate = useNavigate();
@@ -32,11 +64,16 @@ function App() {
   const { toggleQuestion, isCompleted, getStats } = useProgress();
   const { theme: appTheme, toggleTheme } = useTheme();
   const { isSpeaking, toggle: toggleSpeech } = useSpeech();
+  const { getReviewInfo, recordLearned, shouldBeUnlearned } = useSpacedRepetition();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
   const isPlaygroundRoute = location.pathname === '/playground';
+
+  const createQuestionId = useCallback((category: string, topicTitle: string, questionIndex: number): string => {
+    return `${category}__${topicTitle}__${questionIndex}`;
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -46,12 +83,29 @@ function App() {
   }, []);
 
   useEffect(() => {
-    document.body.setAttribute('data-theme', appTheme);
+    document.body.dataset.theme = appTheme;
   }, [appTheme]);
 
-  const createQuestionId = (category: string, topicTitle: string, questionIndex: number): string => {
-    return `${category}__${topicTitle}__${questionIndex}`;
-  };
+  useEffect(() => {
+    if (!selectedTopic) return;
+
+    const checkAndUnlearnQuestions = () => {
+      selectedTopic.questions.forEach((_, index) => {
+        const questionId = createQuestionId(selectedCategory, selectedTopic.title, index);
+        if (isCompleted(questionId) && shouldBeUnlearned(questionId)) {
+          toggleQuestion(questionId);
+        }
+      });
+    };
+
+    checkAndUnlearnQuestions();
+    const interval = setInterval(checkAndUnlearnQuestions, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [selectedTopic, selectedCategory, isCompleted, shouldBeUnlearned, toggleQuestion, createQuestionId]);
+
+  const markdownComponents = useMemo(() => ({
+    code: (props: CodeBlockProps) => <CodeBlock {...props} appTheme={appTheme} />
+  }) as Partial<Components>, [appTheme]);
 
   const sortedQuestions = useMemo(() => {
     if (!selectedTopic) {
@@ -85,7 +139,7 @@ function App() {
         return a.completed ? 1 : -1;
       }
     });
-  }, [selectedTopic, selectedCategory, isCompleted, filterMode, searchQuery]);
+  }, [selectedTopic, selectedCategory, isCompleted, filterMode, searchQuery, createQuestionId]);
 
   const topicStats = useMemo(() => {
     if (!selectedTopic) {
@@ -97,7 +151,7 @@ function App() {
     );
 
     return getStats(selectedTopic.totalQuestions, questionIds);
-  }, [selectedTopic, selectedCategory, getStats]);
+  }, [selectedTopic, selectedCategory, getStats, createQuestionId]);
 
   const totalStats = useMemo(() => {
     const allQuestionIds: string[] = [];
@@ -113,7 +167,7 @@ function App() {
     });
 
     return getStats(totalCount, allQuestionIds);
-  }, [getStats]);
+  }, [getStats, createQuestionId]);
 
   const categoryMenuItems = Object.keys(data).map((category) => ({
     key: category,
@@ -496,7 +550,7 @@ function App() {
 
                 <Collapse 
                   accordion
-                  activeKey={activeQuestionIndex !== null ? [sortedQuestions[activeQuestionIndex]?.id] : undefined}
+                  activeKey={activeQuestionIndex !== null && sortedQuestions.length > activeQuestionIndex ? [sortedQuestions[activeQuestionIndex]?.id] : undefined}
                   onChange={(key) => {
                     if (key && key.length > 0) {
                       const index = sortedQuestions.findIndex(q => q.id === key[0]);
@@ -510,6 +564,7 @@ function App() {
                     const lines = question.split('\n');
                     const title = lines[0];
                     const content = lines.slice(1).join('\n');
+                    const reviewInfo = getReviewInfo(id);
 
                     return (
                       <Panel
@@ -520,12 +575,24 @@ function App() {
                               onChange={(e) => {
                                 e.stopPropagation();
                                 toggleQuestion(id);
+
+                                if (!completed) {
+                                  recordLearned(id);
+                                }
                               }}
                               onClick={(e) => e.stopPropagation()}
                             />
                             <span style={{ textDecoration: completed ? 'line-through' : 'none', opacity: completed ? 0.6 : 1 }}>
                               {index + 1}. {title}
                             </span>
+                            {completed && reviewInfo.daysUntilReview > 0 && (
+                              <span style={{ 
+                                fontSize: '12px',
+                                color: '#999',
+                              }}>
+                                📅 Повторить через {reviewInfo.daysUntilReview}д
+                              </span>
+                            )}
                           </Space>
                         }
                         extra={
@@ -543,27 +610,7 @@ function App() {
                       >
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
-                          components={{
-                            code({ inline, className, children, ...props }: any) {
-                              return inline ? (
-                                <code className={className} {...props}>
-                                  {children}
-                                </code>
-                              ) : (
-                                <pre style={{ 
-                                  background: appTheme === 'dark' ? '#1e1e1e' : '#f5f5f5', 
-                                  padding: '12px', 
-                                  borderRadius: '6px', 
-                                  overflow: 'auto',
-                                  border: appTheme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e8e8e8'
-                                }}>
-                                  <code className={className} {...props}>
-                                    {children}
-                                  </code>
-                                </pre>
-                              );
-                            }
-                          }}
+                          components={markdownComponents}
                         >
                           {content}
                         </ReactMarkdown>
