@@ -4,13 +4,12 @@ const API_BASE_URL = 'https://69d35e3d336103955f8ee1df.mockapi.io/questions-api'
 
 let cachedData: QuestionsData | null = null;
 let lastSync: number = 0;
-const SYNC_INTERVAL = 5000; // 5 секунд между синхронизациями
+const SYNC_INTERVAL = 5000;
 
 export const mockApi = {
   async fetchData(): Promise<QuestionsData> {
     try {
       const now = Date.now();
-      // Кешируем данные на 5 секунд
       if (cachedData && (now - lastSync) < SYNC_INTERVAL) {
         return cachedData;
       }
@@ -18,12 +17,11 @@ export const mockApi = {
       const response = await fetch(`${API_BASE_URL}?limit=1`);
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       
-      const data = await response.json();
+      const data: unknown = await response.json();
       
       if (Array.isArray(data) && data.length > 0) {
-        cachedData = this.normalizeData(data[0]);
+        cachedData = this.normalizeData(data[0] as Record<string, unknown>);
       } else {
-        // Если нет данных, создаём новую запись
         cachedData = await this.createData();
       }
       
@@ -35,13 +33,21 @@ export const mockApi = {
     }
   },
 
-  normalizeData(data: any): QuestionsData {
+  normalizeData(data: Record<string, unknown>): QuestionsData {
     return {
-      id: data.id || 'temp-' + Date.now(),
-      userId: data.userId || 'default-user',
-      progress: data.progress || {},
-      spacedRepetition: data.spacedRepetition || {},
-      updatedAt: data.updatedAt || new Date().toISOString(),
+      id: String(data.id || 'temp-' + Date.now()),
+      userId: String(data.userId || 'default-user'),
+      progress: (data.progress as Record<string, boolean>) || {},
+      spacedRepetition: Object.entries(data.spacedRepetition as Record<string, unknown> || {}).reduce((acc, [key, value]) => {
+        const val = value as Record<string, number>;
+        acc[key] = {
+          lastMarked: val.lastMarked || Date.now(),
+          interval: val.interval || 1,
+          repetitions: val.repetitions || 1,
+        };
+        return acc;
+      }, {} as Record<string, { lastMarked: number; interval: number; repetitions: number }>),
+      updatedAt: String(data.updatedAt || new Date().toISOString()),
     };
   },
 
@@ -62,7 +68,7 @@ export const mockApi = {
 
       if (!response.ok) throw new Error(`Update failed: ${response.status}`);
       
-      const result = this.normalizeData(await response.json());
+      const result = this.normalizeData(await response.json() as Record<string, unknown>);
       cachedData = result;
       lastSync = Date.now();
       return result;
@@ -89,7 +95,7 @@ export const mockApi = {
 
       if (!response.ok) throw new Error(`Create failed: ${response.status}`);
       
-      const result = this.normalizeData(await response.json());
+      const result = this.normalizeData(await response.json() as Record<string, unknown>);
       cachedData = result;
       lastSync = Date.now();
       return result;
@@ -114,3 +120,4 @@ export const mockApi = {
     lastSync = 0;
   },
 };
+

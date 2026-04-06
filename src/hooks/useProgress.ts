@@ -19,7 +19,6 @@ export const useProgress = () => {
     }
   });
 
-  // Загрузить прогресс с mockapi при монтировании
   useEffect(() => {
     const loadProgress = async () => {
       try {
@@ -36,16 +35,13 @@ export const useProgress = () => {
     loadProgress();
   }, []);
 
-  // Синхронизировать прогресс с mockapi и localStorage
   useEffect(() => {
     const timer = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: progress }));
-      
-      // Асинхронно отправляем на mockapi
       mockApi.updateData({ progress }).catch(error => {
         console.error('Failed to sync progress to mockapi:', error);
       });
-    }, 1000); // Ждём 1 секунду перед синхронизацией (debounce)
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [progress]);

@@ -18,7 +18,6 @@ export const useSpacedRepetition = () => {
     return {};
   });
 
-  // Загрузить spaced repetition данные с mockapi при монтировании
   useEffect(() => {
     const loadReviewData = async () => {
       try {
@@ -26,12 +25,11 @@ export const useSpacedRepetition = () => {
         if (data.spacedRepetition && Object.keys(data.spacedRepetition).length > 0) {
           const normalizedData: Record<string, QuestionReview> = {};
           
-          // Нормализуем данные из mockAPI в правильный формат
-          Object.entries(data.spacedRepetition).forEach(([key, value]: [string, any]) => {
+          Object.entries(data.spacedRepetition).forEach(([key, value]) => {
             normalizedData[key] = {
-              lastMarked: value.lastMarked || Date.now(),
-              interval: value.interval || 1,
-              repetitions: value.repetitions || 1,
+              lastMarked: value.lastMarked,
+              interval: value.interval,
+              repetitions: value.repetitions,
             };
           });
           
@@ -46,16 +44,13 @@ export const useSpacedRepetition = () => {
     loadReviewData();
   }, []);
 
-  // Синхронизировать spaced repetition данные с mockapi и localStorage
   useEffect(() => {
     const timer = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewData));
-      
-      // Асинхронно отправляем на mockapi
       mockApi.updateData({ spacedRepetition: reviewData }).catch(error => {
         console.error('Failed to sync spaced repetition to mockapi:', error);
       });
-    }, 1000); // Ждём 1 секунду перед синхронизацией (debounce)
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [reviewData]);
