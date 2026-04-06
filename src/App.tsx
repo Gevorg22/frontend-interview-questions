@@ -781,7 +781,7 @@ function App() {
                   </Row>
                 </Card>
 
-                {(expiringQuestions.length > 0 || totalStats.completed > 0) && (() => {
+                {(() => {
                   const hasExpiring = expiringQuestions.length > 0;
                   const cardBg = hasExpiring 
                     ? (appTheme === 'dark' ? 'rgba(255, 77, 79, 0.08)' : '#fff2f0')
