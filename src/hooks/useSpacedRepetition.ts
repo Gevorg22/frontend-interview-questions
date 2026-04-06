@@ -7,7 +7,7 @@ interface QuestionReview {
 }
 
 const STORAGE_KEY = 'frontend-questions-spaced-repetition';
-const INTERVALS = [1, 2, 4, 7, 14, 21, 30];
+const INTERVALS = [1, 2, 3, 7, 14, 30, 60, 90, 120];
 
 export const useSpacedRepetition = () => {
   const [reviewData, setReviewData] = useState<Record<string, QuestionReview>>(() => {

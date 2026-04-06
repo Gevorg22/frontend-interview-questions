@@ -628,9 +628,11 @@ function App() {
                     const title = lines[0];
                     const content = lines.slice(1).join('\n');
                     const reviewInfo = getReviewInfo(id);
+                    const isDue = reviewInfo.isDue;
 
                     return (
                       <Panel
+                        className={isDue ? 'question-due' : ''}
                         header={
                           <Space>
                             <Checkbox
@@ -645,10 +647,16 @@ function App() {
                               }}
                               onClick={(e) => e.stopPropagation()}
                             />
-                            <span style={{ textDecoration: completed ? 'line-through' : 'none', opacity: completed ? 0.6 : 1 }}>
+                            {isDue && <span style={{ fontSize: '16px' }}>🔴</span>}
+                            <span style={{ 
+                              textDecoration: completed ? 'line-through' : 'none', 
+                              opacity: completed ? 0.6 : 1,
+                              color: isDue ? '#ff4d4f' : 'inherit',
+                              fontWeight: isDue ? 600 : 'normal'
+                            }}>
                               {index + 1}. {title}
                             </span>
-                            {completed && reviewInfo.daysUntilReview > 0 && (
+                            {completed && reviewInfo.daysUntilReview > 0 && !isDue && (
                               <span style={{ 
                                 fontSize: '12px',
                                 color: '#999',
