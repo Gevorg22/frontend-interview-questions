@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
-
-interface QuestionReview {
-  lastMarked: number;
-  interval: number;
-  repetitions: number;
-}
+import { mockApi } from '../api/mockApi';
+import type { QuestionReview } from '../api/types';
 
 const STORAGE_KEY = 'frontend-questions-spaced-repetition';
 const INTERVALS = [1, 2, 3, 7, 14, 30, 60, 90, 120];
@@ -22,8 +18,46 @@ export const useSpacedRepetition = () => {
     return {};
   });
 
+  // Загрузить spaced repetition данные с mockapi при монтировании
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewData));
+    const loadReviewData = async () => {
+      try {
+        const data = await mockApi.fetchData();
+        if (data.spacedRepetition && Object.keys(data.spacedRepetition).length > 0) {
+          const normalizedData: Record<string, QuestionReview> = {};
+          
+          // Нормализуем данные из mockAPI в правильный формат
+          Object.entries(data.spacedRepetition).forEach(([key, value]: [string, any]) => {
+            normalizedData[key] = {
+              lastMarked: value.lastMarked || Date.now(),
+              interval: value.interval || 1,
+              repetitions: value.repetitions || 1,
+            };
+          });
+          
+          setReviewData(normalizedData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedData));
+        }
+      } catch (error) {
+        console.error('Failed to load spaced repetition from mockapi:', error);
+      }
+    };
+
+    loadReviewData();
+  }, []);
+
+  // Синхронизировать spaced repetition данные с mockapi и localStorage
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewData));
+      
+      // Асинхронно отправляем на mockapi
+      mockApi.updateData({ spacedRepetition: reviewData }).catch(error => {
+        console.error('Failed to sync spaced repetition to mockapi:', error);
+      });
+    }, 1000); // Ждём 1 секунду перед синхронизацией (debounce)
+
+    return () => clearTimeout(timer);
   }, [reviewData]);
 
   const recordLearned = (questionId: string) => {
@@ -77,3 +111,4 @@ export const useSpacedRepetition = () => {
     getReviewInfo,
   };
 };
+

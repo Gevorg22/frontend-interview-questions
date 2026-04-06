@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { QuestionProgress } from '../types';
+import { mockApi } from '../api/mockApi';
 
 const STORAGE_KEY = 'frontend-questions-progress';
 
@@ -18,8 +19,35 @@ export const useProgress = () => {
     }
   });
 
+  // Загрузить прогресс с mockapi при монтировании
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: progress }));
+    const loadProgress = async () => {
+      try {
+        const data = await mockApi.fetchData();
+        if (data.progress && Object.keys(data.progress).length > 0) {
+          setProgress(data.progress);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: data.progress }));
+        }
+      } catch (error) {
+        console.error('Failed to load progress from mockapi:', error);
+      }
+    };
+
+    loadProgress();
+  }, []);
+
+  // Синхронизировать прогресс с mockapi и localStorage
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: progress }));
+      
+      // Асинхронно отправляем на mockapi
+      mockApi.updateData({ progress }).catch(error => {
+        console.error('Failed to sync progress to mockapi:', error);
+      });
+    }, 1000); // Ждём 1 секунду перед синхронизацией (debounce)
+
+    return () => clearTimeout(timer);
   }, [progress]);
 
   const toggleQuestion = (questionId: string) => {
