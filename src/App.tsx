@@ -196,14 +196,7 @@ function App() {
           const id = createQuestionId(category, topic.title, index);
           if (isCompleted(id)) {
             const reviewInfo = getReviewInfo(id);
-            if (reviewInfo.daysUntilReview <= 5) {
-              let urgency: UrgencyLevel = 'soon';
-              if (reviewInfo.isDue) {
-                urgency = 'critical';
-              } else if (reviewInfo.daysUntilReview <= 2) {
-                urgency = 'warning';
-              }
-              
+            if (reviewInfo.isDue) {
               expiring.push({
                 id,
                 category,
@@ -211,7 +204,7 @@ function App() {
                 question: question.split('\n')[0],
                 daysUntilReview: reviewInfo.daysUntilReview,
                 isDue: reviewInfo.isDue,
-                urgency,
+                urgency: 'critical',
               });
             }
           }
@@ -220,8 +213,6 @@ function App() {
     });
 
     expiring.sort((a: ExpiringQuestion, b: ExpiringQuestion) => {
-      if (a.isDue && !b.isDue) return -1;
-      if (!a.isDue && b.isDue) return 1;
       return a.daysUntilReview - b.daysUntilReview;
     });
     const sortedExpiring = expiring.slice(0, 10);
@@ -726,9 +717,9 @@ function App() {
                     }}
                     title={
                       <Space>
-                        <span style={{ fontSize: 18 }}>⚡</span>
-                        <span>Срочные к повторению</span>
-                        <Text type="secondary" style={{ fontSize: 12 }}>{expiringQuestions.length} вопросов</Text>
+                        <span style={{ fontSize: 18 }}>🔴</span>
+                        <span>Вопросы на повторение</span>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{expiringQuestions.length}</Text>
                       </Space>
                     }
                   >
@@ -765,7 +756,7 @@ function App() {
                             </div>
                           </div>
                           <div style={{ fontSize: 12, whiteSpace: 'nowrap', fontWeight: 'bold' }}>
-                            {q.isDue ? '🔴 Истекло' : `⏰ ${q.daysUntilReview}д`}
+                            🔴 Повторить
                           </div>
                         </Button>
                       ))}
