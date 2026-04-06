@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, type ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useMemo, useEffect, useCallback, type ReactNode, useRef } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Layout, Menu, Typography, Card, Collapse, theme, Drawer, Button, Checkbox, Progress, Space, Statistic, Row, Col, ConfigProvider, Switch, Breadcrumb, Input, Segmented, Skeleton } from 'antd';
 import { BookOutlined, CodeOutlined, MenuOutlined, UnorderedListOutlined, CheckCircleOutlined, ClockCircleOutlined, BulbOutlined, BulbFilled, LeftOutlined, RightOutlined, ThunderboltOutlined, SearchOutlined, HomeOutlined, SoundOutlined, PauseCircleOutlined, ExperimentOutlined } from '@ant-design/icons';
 import type { Components } from 'react-markdown';
@@ -61,6 +61,7 @@ const CodeBlock = ({
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string>('JavaScript');
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
@@ -70,6 +71,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [questionToOpen, setQuestionToOpen] = useState<string | null>(null);
+  const [urlInitialized, setUrlInitialized] = useState(false);
   const { toggleQuestion, isCompleted, getStats } = useProgress();
   const { theme: appTheme, toggleTheme } = useTheme();
   const { isSpeaking, toggle: toggleSpeech } = useSpeech();
@@ -79,6 +81,7 @@ function App() {
   } = theme.useToken();
 
   const isPlaygroundRoute = location.pathname === '/playground';
+  const initializeFromUrlRef = useRef(true);
 
   const createQuestionId = useCallback((category: string, topicTitle: string, questionIndex: number): string => {
     return `${category}__${topicTitle}__${questionIndex}`;
@@ -90,6 +93,31 @@ function App() {
     }, 800);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (isPlaygroundRoute || !initializeFromUrlRef.current) return;
+
+    const urlCategory = searchParams.get('category');
+    const urlTopic = searchParams.get('topic');
+    const urlQuestion = searchParams.get('question');
+
+    // Вычисляем все данные до setState
+    if (urlCategory && data[urlCategory]) {
+      const topic = urlTopic ? data[urlCategory].find(t => t.title === urlTopic) : null;
+      
+      setSelectedCategory(urlCategory);
+      
+      if (topic) {
+        setSelectedTopic(topic);
+        if (urlQuestion) {
+          setQuestionToOpen(`${urlCategory}__${urlTopic}__${urlQuestion}`);
+        }
+      }
+    }
+    
+    setUrlInitialized(true);
+    initializeFromUrlRef.current = false;
+  }, [isPlaygroundRoute]);
 
   useEffect(() => {
     document.body.dataset.theme = appTheme;
@@ -161,6 +189,13 @@ function App() {
       }
     }
   }, [questionToOpen, selectedTopic, sortedQuestions]);
+
+  const getOriginalIndexFromActive = useCallback((): number | null => {
+    if (activeQuestionIndex === null || !sortedQuestions[activeQuestionIndex]) {
+      return null;
+    }
+    return sortedQuestions[activeQuestionIndex].index;
+  }, [activeQuestionIndex, sortedQuestions]);
 
   const topicStats = useMemo(() => {
     if (!selectedTopic) {
@@ -279,6 +314,25 @@ function App() {
     setSelectedTopic(randomTopicData.topic);
     setActiveQuestionIndex(randomQuestionIndex);
   };
+
+  const updateUrlState = useCallback((category: string, topic: Topic | null, originalQuestionIndex: number | null) => {
+    const params = new URLSearchParams();
+    params.set('category', category);
+    if (topic) {
+      params.set('topic', topic.title);
+      if (originalQuestionIndex !== null && originalQuestionIndex >= 0) {
+        params.set('question', originalQuestionIndex.toString());
+      }
+    }
+    setSearchParams(params);
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    if (urlInitialized && selectedCategory && selectedTopic) {
+      const originalIndex = getOriginalIndexFromActive();
+      updateUrlState(selectedCategory, selectedTopic, originalIndex);
+    }
+  }, [selectedCategory, selectedTopic, activeQuestionIndex, urlInitialized, updateUrlState, getOriginalIndexFromActive]);
 
   const goToNextQuestion = () => {
     if (activeQuestionIndex === null || activeQuestionIndex >= sortedQuestions.length - 1) {
