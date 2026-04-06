@@ -14,6 +14,14 @@ import { useSpacedRepetition } from './hooks/useSpacedRepetition';
 import { CodePlayground } from './components/CodePlayground';
 import './App.css';
 
+type UrgencyLevel = 'critical' | 'warning' | 'soon';
+
+const getUrgencyColor = (isDue: boolean, urgency: UrgencyLevel): string => {
+  if (isDue) return '#ff4d4f';
+  if (urgency === 'warning') return '#ff7a45';
+  return '#faad14';
+};
+
 const { Header, Sider, Content } = Layout;
 const { Title, Paragraph, Text } = Typography;
 const { Panel } = Collapse;
@@ -168,6 +176,57 @@ function App() {
 
     return getStats(totalCount, allQuestionIds);
   }, [getStats, createQuestionId]);
+
+  interface ExpiringQuestion {
+    id: string;
+    category: string;
+    topic: string;
+    question: string;
+    daysUntilReview: number;
+    isDue: boolean;
+    urgency: UrgencyLevel;
+  }
+
+  const expiringQuestions = useMemo(() => {
+    const expiring: ExpiringQuestion[] = [];
+
+    Object.entries(data).forEach(([category, topics]) => {
+      topics.forEach((topic) => {
+        topic.questions.forEach((question, index) => {
+          const id = createQuestionId(category, topic.title, index);
+          if (isCompleted(id)) {
+            const reviewInfo = getReviewInfo(id);
+            if (reviewInfo.daysUntilReview <= 5) {
+              let urgency: UrgencyLevel = 'soon';
+              if (reviewInfo.isDue) {
+                urgency = 'critical';
+              } else if (reviewInfo.daysUntilReview <= 2) {
+                urgency = 'warning';
+              }
+              
+              expiring.push({
+                id,
+                category,
+                topic: topic.title,
+                question: question.split('\n')[0],
+                daysUntilReview: reviewInfo.daysUntilReview,
+                isDue: reviewInfo.isDue,
+                urgency,
+              });
+            }
+          }
+        });
+      });
+    });
+
+    expiring.sort((a: ExpiringQuestion, b: ExpiringQuestion) => {
+      if (a.isDue && !b.isDue) return -1;
+      if (!a.isDue && b.isDue) return 1;
+      return a.daysUntilReview - b.daysUntilReview;
+    });
+    const sortedExpiring = expiring.slice(0, 10);
+    return sortedExpiring;
+  }, [createQuestionId, isCompleted, getReviewInfo]);
 
   const categoryMenuItems = Object.keys(data).map((category) => ({
     key: category,
@@ -655,6 +714,64 @@ function App() {
                     </Col>
                   </Row>
                 </Card>
+
+                {expiringQuestions.length > 0 && (
+                  <Card 
+                    style={{ 
+                      marginTop: 24, 
+                      maxWidth: 600, 
+                      margin: '24px auto',
+                      background: appTheme === 'dark' ? 'rgba(255, 77, 79, 0.08)' : '#fff2f0',
+                      border: appTheme === 'dark' ? '1px solid rgba(255, 77, 79, 0.2)' : '1px solid #ffccc7'
+                    }}
+                    title={
+                      <Space>
+                        <span style={{ fontSize: 18 }}>⚡</span>
+                        <span>Срочные к повторению</span>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{expiringQuestions.length} вопросов</Text>
+                      </Space>
+                    }
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {expiringQuestions.map((q: ExpiringQuestion) => (
+                        <Button
+                          key={q.id}
+                          onClick={() => {
+                            setSelectedCategory(q.category);
+                            setSelectedTopic(data[q.category].find(t => t.title === q.topic) || null);
+                          }}
+                          style={{
+                            padding: '12px 16px',
+                            background: getUrgencyColor(q.isDue, q.urgency),
+                            borderRadius: '6px',
+                            color: 'white',
+                            border: 'none',
+                            textAlign: 'left',
+                            height: 'auto',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            gap: 12,
+                          }}
+                          type="text"
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
+                              {q.question.substring(0, 60)}{q.question.length > 60 ? '...' : ''}
+                            </div>
+                            <div style={{ fontSize: 12, opacity: 0.9 }}>
+                              {q.category} • {q.topic}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 12, whiteSpace: 'nowrap', fontWeight: 'bold' }}>
+                            {q.isDue ? '🔴 Истекло' : `⏰ ${q.daysUntilReview}д`}
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  </Card>
+                )}
 
                 <div className="mobile-hint" style={{ marginTop: 24 }}>
                   <Button 
