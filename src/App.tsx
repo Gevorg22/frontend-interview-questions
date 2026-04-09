@@ -832,21 +832,22 @@ function App() {
                               height: 'auto',
                               width: '100%',
                               display: 'flex',
-                              justifyContent: 'space-between',
+                              justifyContent: 'flex-start',
                               alignItems: 'flex-start',
                               gap: 12,
+                              flexWrap: 'wrap'
                             }}
                             type="text"
                           >
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 'bold', marginBottom: 4, wordBreak: 'break-word' }}>
                                 {q.question.substring(0, 60)}{q.question.length > 60 ? '...' : ''}
                               </div>
-                              <div style={{ fontSize: 12, opacity: 0.9 }}>
+                              <div style={{ fontSize: 12, opacity: 0.9, wordBreak: 'break-word' }}>
                                 {q.category} • {q.topic}
                               </div>
                             </div>
-                            <div style={{ fontSize: 12, whiteSpace: 'nowrap', fontWeight: 'bold' }}>
+                            <div style={{ fontSize: 12, fontWeight: 'bold', flexShrink: 0, marginLeft: 8 }}>
                               🔴 Повторить
                             </div>
                           </Button>
