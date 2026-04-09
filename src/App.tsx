@@ -182,10 +182,10 @@ function App() {
     if (questionToOpen && selectedTopic && sortedQuestions.length > 0) {
       const index = sortedQuestions.findIndex(q => q.id === questionToOpen);
       if (index >= 0) {
-        requestAnimationFrame(() => {
+        setTimeout(() => {
           setActiveQuestionIndex(index);
           setQuestionToOpen(null);
-        });
+        }, 0);
       }
     }
   }, [questionToOpen, selectedTopic, sortedQuestions]);
@@ -667,10 +667,11 @@ function App() {
 
                 <Collapse 
                   accordion
-                  activeKey={activeQuestionIndex !== null && sortedQuestions.length > activeQuestionIndex ? [sortedQuestions[activeQuestionIndex]?.id] : undefined}
+                  activeKey={activeQuestionIndex !== null && sortedQuestions.length > activeQuestionIndex ? sortedQuestions[activeQuestionIndex]?.id : ''}
                   onChange={(key) => {
-                    if (key && key.length > 0) {
-                      const index = sortedQuestions.findIndex(q => q.id === key[0]);
+                    if (key) {
+                      const id = typeof key === 'string' ? key : key[0];
+                      const index = sortedQuestions.findIndex(q => q.id === id);
                       setActiveQuestionIndex(index >= 0 ? index : null);
                     } else {
                       setActiveQuestionIndex(null);
