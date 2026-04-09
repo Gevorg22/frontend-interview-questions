@@ -271,6 +271,18 @@ function App() {
     key: category,
     icon: <CodeOutlined />,
     label: `${category} (${data[category].reduce((acc, topic) => acc + topic.totalQuestions, 0)})`,
+    onClick: () => {
+      try {
+        navigate('/');
+        setSelectedCategory(category);
+        setSelectedTopic(null);
+        setTimeout(() => {
+          setCategoryDrawerOpen(false);
+        }, 50);
+      } catch (error) {
+        console.error('Category selection error:', error);
+      }
+    },
   }));
 
   const topicMenuItems = selectedCategory
@@ -286,8 +298,15 @@ function App() {
           icon: isTopicCompleted ? <CheckCircleOutlined style={{ color: '#52c41a' }} /> : <BookOutlined />,
           label: `${topic.title} (${completedCount}/${topic.totalQuestions})`,
           onClick: () => {
-            setSelectedTopic(topic);
-            setActiveQuestionIndex(null);
+            try {
+              setSelectedTopic(topic);
+              setActiveQuestionIndex(null);
+              setTimeout(() => {
+                setTopicDrawerOpen(false);
+              }, 50);
+            } catch (error) {
+              console.error('Topic selection error:', error);
+            }
           },
         };
       })
@@ -495,12 +514,6 @@ function App() {
             selectedKeys={[selectedCategory]}
             style={{ borderRight: 0, borderRadius: '0 0 16px 0' }}
             items={categoryMenuItems}
-            onClick={({ key }) => {
-              navigate('/');
-              setSelectedCategory(key);
-              setSelectedTopic(null);
-              setCategoryDrawerOpen(false);
-            }}
           />
         </Drawer>
 
@@ -530,7 +543,6 @@ function App() {
             mode="inline"
             selectedKeys={selectedTopic ? [`${selectedCategory}-${data[selectedCategory].indexOf(selectedTopic)}`] : []}
             items={topicMenuItems}
-            onClick={() => setTopicDrawerOpen(false)}
             style={{ borderRight: 0, borderRadius: '0 0 0 16px' }}
           />
         </Drawer>
