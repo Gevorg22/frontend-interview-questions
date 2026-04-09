@@ -667,13 +667,22 @@ function App() {
 
                 <Collapse 
                   accordion
-                  activeKey={activeQuestionIndex !== null && sortedQuestions.length > activeQuestionIndex ? sortedQuestions[activeQuestionIndex]?.id : ''}
+                  activeKey={activeQuestionIndex !== null && sortedQuestions.length > activeQuestionIndex && sortedQuestions[activeQuestionIndex] ? sortedQuestions[activeQuestionIndex].id : undefined}
                   onChange={(key) => {
-                    if (key) {
-                      const id = typeof key === 'string' ? key : key[0];
-                      const index = sortedQuestions.findIndex(q => q.id === id);
-                      setActiveQuestionIndex(index >= 0 ? index : null);
-                    } else {
+                    try {
+                      if (key) {
+                        const id = Array.isArray(key) ? key[0] : String(key);
+                        if (id) {
+                          const index = sortedQuestions.findIndex(q => q.id === id);
+                          setActiveQuestionIndex(index >= 0 ? index : null);
+                        } else {
+                          setActiveQuestionIndex(null);
+                        }
+                      } else {
+                        setActiveQuestionIndex(null);
+                      }
+                    } catch (error) {
+                      console.error('Collapse onChange error:', error);
                       setActiveQuestionIndex(null);
                     }
                   }}
@@ -693,14 +702,23 @@ function App() {
                             <Checkbox
                               checked={completed}
                               onChange={(e) => {
-                                e.stopPropagation();
-                                toggleQuestion(id);
-
-                                if (!completed) {
-                                  recordLearned(id);
+                                try {
+                                  e.stopPropagation?.();
+                                  toggleQuestion(id);
+                                  if (!completed) {
+                                    recordLearned(id);
+                                  }
+                                } catch (error) {
+                                  console.error('Checkbox onChange error:', error);
                                 }
                               }}
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                try {
+                                  e.stopPropagation?.();
+                                } catch (error) {
+                                  console.error('Checkbox onClick error:', error);
+                                }
+                              }}
                             />
                             {isDue && <span style={{ fontSize: '16px' }}>🔴</span>}
                             <span style={{ 
@@ -726,8 +744,12 @@ function App() {
                             type="text"
                             icon={isSpeaking ? <PauseCircleOutlined /> : <SoundOutlined />}
                             onClick={(e) => {
-                              e.stopPropagation();
-                              toggleSpeech(question);
+                              try {
+                                e.stopPropagation?.();
+                                toggleSpeech(question);
+                              } catch (error) {
+                                console.error('Speech button error:', error);
+                              }
                             }}
                             title={isSpeaking ? 'Остановить озвучку' : 'Озвучить вопрос'}
                           />
